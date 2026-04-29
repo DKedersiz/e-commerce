@@ -17,3 +17,11 @@ spring:
         default_schema: ecommerce
         hbm2ddl:
           create_namespaces: true
+
+
+  security:
+    jwt:
+      secret-key: KmOh41wlv912wgrGcwk6o4zsDm6lAD6VqBtBlcDvYE5
+      expiration: 900000
+      refresh-token:
+        expiration: 604800000
