@@ -12,7 +12,6 @@ public enum ErrorType {
     EMAIL_ALREADY_EXISTS(3,"Bu email ile oluşturulmuş bir hesap mevcut.",HttpStatus.BAD_REQUEST),
     USER_NOT_FOUND(4,"Kullanıcı bulunamadı.",HttpStatus.NOT_FOUND);
 
-
     private final int code;
     private final String message;
     private final HttpStatus httpStatus;
