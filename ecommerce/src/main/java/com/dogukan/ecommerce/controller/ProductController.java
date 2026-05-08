@@ -3,6 +3,7 @@ package com.dogukan.ecommerce.controller;
 import com.dogukan.ecommerce.dto.request.ProductCreateRequest;
 import com.dogukan.ecommerce.dto.response.ProductResponse;
 import jakarta.validation.Valid;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
@@ -12,7 +13,7 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/v1/products")
 public interface ProductController {
 
-    @PostMapping
+    @PostMapping("/create")
     ResponseEntity<ProductResponse> createProduct(@Valid @RequestBody ProductCreateRequest request);
 
     @GetMapping("/{id}")
@@ -20,8 +21,8 @@ public interface ProductController {
 
     @GetMapping
     ResponseEntity<Page<ProductResponse>> getAllProducts(
-            @PageableDefault(size = 20, sort = "name") Pageable pageable);
+            @PageableDefault(size = 20, sort = "name") @ParameterObject Pageable pageable);
 
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/delete/{id}")
     ResponseEntity<Void> deleteProduct(@PathVariable Long id);
 }

@@ -1,21 +1,23 @@
 package com.dogukan.ecommerce.entity;
 
 import com.dogukan.ecommerce.entity.base.BaseEntity;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.*;
 
 import java.math.BigDecimal;
 
 @Entity
-@Table(name = "products")
+@Table(name = "products", indexes = {
+        @Index(name = "idx_product_stock",columnList = "stock")
+})
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
 public class Product extends BaseEntity {
+    @Version
+    private Long version;
 
     @Column(nullable = false)
     private String name;

@@ -15,7 +15,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -69,5 +70,38 @@ public class ProductServiceImpl implements ProductService {
 
         // TODO: Kafka/RabbitMQ - Ürün silindi event'i.
         // TODO: Redis - Cache temizleme.
+    }
+
+    @Override
+    @Transactional
+    public Map<Long, Product> decreaseStocksAndGet(Map<Long, Integer> productQuantities) {
+        List<Long> productIds = new ArrayList<>(productQuantities.keySet());
+        List<Product> products = productRepository.findAllByIdInWithLockOrderByIdAsc(productIds);
+
+        Set<Long> foundIds = products.stream()
+                .map(Product::getId)
+                .collect(Collectors.toSet());
+
+        List<Long> missingIds = productIds.stream()
+                .filter(id -> !foundIds.contains(id))
+                .toList();
+
+        if (!missingIds.isEmpty()) {
+            throw new BusinessException(ErrorType.PRODUCT_NOT_FOUND);
+        }
+
+        Map<Long, Product> productMap = new HashMap<>();
+        for (Product product : products) {
+            Integer requiredQuantity = productQuantities.get(product.getId());
+
+            if (product.getStock() < requiredQuantity) {
+                throw new BusinessException(ErrorType.NOT_ENOUGH_STOCK);
+            }
+
+            product.setStock(product.getStock() - requiredQuantity);
+            productMap.put(product.getId(), product);
+        }
+
+        return productMap;
     }
 }

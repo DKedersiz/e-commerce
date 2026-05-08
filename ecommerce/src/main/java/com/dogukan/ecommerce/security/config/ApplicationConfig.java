@@ -21,8 +21,12 @@ public class ApplicationConfig {
 
     @Bean
     public UserDetailsService userDetailsService() {
-        return username -> userRepository.findByEmail(username)
-                .orElseThrow(() -> new UsernameNotFoundException("Kullanıcı bulunamadı"));
+        return username -> {
+            System.out.println("JWT'den Çıkarılan ve Aranan Email: [" + username + "]");
+
+            return userRepository.findByEmail(username)
+                    .orElseThrow(() -> new UsernameNotFoundException("Kullanıcı veritabanında bulunamadı: " + username));
+        };
     }
 
     @Bean
