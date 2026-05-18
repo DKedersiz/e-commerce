@@ -104,4 +104,13 @@ public class ProductServiceImpl implements ProductService {
 
         return productMap;
     }
+
+    @Override
+    @Transactional
+    public void increaseStock(Long productId, Integer quantity) {
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new BusinessException(ErrorType.PRODUCT_NOT_FOUND));
+
+        product.setStock(product.getStock() + quantity);
+    }
 }

@@ -18,4 +18,6 @@ public interface ProductService {
     void deleteProduct(Long id);
 
     Map<Long, Product> decreaseStocksAndGet(Map<Long, Integer> productQuantities);
+
+    void increaseStock(Long productId, Integer quantity);
 }

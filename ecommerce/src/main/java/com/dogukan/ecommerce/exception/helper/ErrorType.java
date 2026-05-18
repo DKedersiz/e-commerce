@@ -13,7 +13,9 @@ public enum ErrorType {
     USER_NOT_FOUND(4,"Kullanıcı bulunamadı.",HttpStatus.NOT_FOUND),
     NOT_ENOUGH_STOCK(5,"Yeterli stok bulunamadı.",HttpStatus.BAD_REQUEST),
     EMPTY_CART(6,"Sepet boş olamaz.",HttpStatus.BAD_REQUEST),
-    INVALID_ORDER_ITEMS(7,"Invalid order items.",HttpStatus.BAD_REQUEST);
+    INVALID_ORDER_ITEMS(7,"Invalid order items.",HttpStatus.BAD_REQUEST),
+    INVALID_STATUS_TRANSITION(8,"Invalid status transition.",HttpStatus.BAD_REQUEST),
+    ORDER_NOT_FOUND(9,"Sipariş bulunamadı.",HttpStatus.NOT_FOUND);
 
 
     private final int code;
