@@ -1,9 +1,9 @@
 package com.dogukan.ecommerce.service;
 
 import com.dogukan.ecommerce.dto.request.ProductCreateRequest;
+import com.dogukan.ecommerce.dto.response.PageResponse;
 import com.dogukan.ecommerce.dto.response.ProductResponse;
 import com.dogukan.ecommerce.entity.Product;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 import java.util.Map;
@@ -13,7 +13,7 @@ public interface ProductService {
 
     ProductResponse getProductById(Long id);
 
-    Page<ProductResponse> getAllProducts(Pageable pageable);
+    PageResponse<ProductResponse> getAllProducts(Pageable pageable);
 
     void deleteProduct(Long id);
 

@@ -1,6 +1,7 @@
 package com.dogukan.ecommerce.service.impl;
 
 import com.dogukan.ecommerce.dto.request.ProductCreateRequest;
+import com.dogukan.ecommerce.dto.response.PageResponse;
 import com.dogukan.ecommerce.dto.response.ProductResponse;
 import com.dogukan.ecommerce.entity.Product;
 import com.dogukan.ecommerce.exception.BusinessException;
@@ -10,7 +11,8 @@ import com.dogukan.ecommerce.repository.ProductRepository;
 import com.dogukan.ecommerce.service.ProductService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Page;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,6 +31,7 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     @Transactional
+    @CacheEvict(value = "products_cache",allEntries = true)
     public ProductResponse createProduct(ProductCreateRequest request) {
         log.info("Yeni ürün oluşturuluyor: {}", request.getName());
 
@@ -52,10 +55,13 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<ProductResponse> getAllProducts(Pageable pageable) {
+    @Cacheable(value = "products_cache",key = "#pageable.pageNumber")
+    public PageResponse<ProductResponse> getAllProducts(Pageable pageable) {
         // TODO: Redis - Sayfalanmış veya tam liste cache'ten dönecek.
-        return productRepository.findAll(pageable)
-                .map(productMapper::toResponse);
+        return PageResponse.from(
+                productRepository.findAll(pageable)
+                        .map(productMapper::toResponse)
+        );
     }
 
     @Override
@@ -74,6 +80,7 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     @Transactional
+    @CacheEvict(value = "products_cache", allEntries = true)
     public Map<Long, Product> decreaseStocksAndGet(Map<Long, Integer> productQuantities) {
         List<Long> productIds = new ArrayList<>(productQuantities.keySet());
         List<Product> products = productRepository.findAllByIdInWithLockOrderByIdAsc(productIds);
@@ -107,6 +114,7 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     @Transactional
+    @CacheEvict(value = "products_cache", allEntries = true)
     public void increaseStock(Long productId, Integer quantity) {
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new BusinessException(ErrorType.PRODUCT_NOT_FOUND));

@@ -1,10 +1,10 @@
 package com.dogukan.ecommerce.controller;
 
 import com.dogukan.ecommerce.dto.request.ProductCreateRequest;
+import com.dogukan.ecommerce.dto.response.PageResponse;
 import com.dogukan.ecommerce.dto.response.ProductResponse;
 import jakarta.validation.Valid;
 import org.springdoc.core.annotations.ParameterObject;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
@@ -20,7 +20,7 @@ public interface ProductController {
     ResponseEntity<ProductResponse> getProductById(@PathVariable Long id);
 
     @GetMapping
-    ResponseEntity<Page<ProductResponse>> getAllProducts(
+    ResponseEntity<PageResponse<ProductResponse>> getAllProducts(
             @PageableDefault(size = 20, sort = "name") @ParameterObject Pageable pageable);
 
     @DeleteMapping("/delete/{id}")

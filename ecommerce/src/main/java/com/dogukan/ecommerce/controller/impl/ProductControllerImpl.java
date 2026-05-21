@@ -2,10 +2,10 @@ package com.dogukan.ecommerce.controller.impl;
 
 import com.dogukan.ecommerce.controller.ProductController;
 import com.dogukan.ecommerce.dto.request.ProductCreateRequest;
+import com.dogukan.ecommerce.dto.response.PageResponse;
 import com.dogukan.ecommerce.dto.response.ProductResponse;
 import com.dogukan.ecommerce.service.ProductService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
@@ -29,7 +29,7 @@ public class ProductControllerImpl implements ProductController {
     }
 
     @Override
-    public ResponseEntity<Page<ProductResponse>> getAllProducts(@PageableDefault(size = 20,sort = "name") Pageable pageable) {
+    public ResponseEntity<PageResponse<ProductResponse>> getAllProducts(@PageableDefault(size = 20,sort = "name") Pageable pageable) {
         return ResponseEntity.ok(productService.getAllProducts(pageable));
     }
 

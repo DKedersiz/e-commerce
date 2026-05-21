@@ -4,6 +4,7 @@ import com.dogukan.ecommerce.entity.base.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.io.Serializable;
 import java.math.BigDecimal;
 
 @Entity
@@ -15,7 +16,7 @@ import java.math.BigDecimal;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Product extends BaseEntity {
+public class Product extends BaseEntity implements Serializable {
     @Version
     private Long version;
 
