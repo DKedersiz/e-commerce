@@ -1,5 +1,6 @@
 package com.dogukan.ecommerce.service.impl;
 
+import com.dogukan.ecommerce.dto.event.OrderCompletedEvent;
 import com.dogukan.ecommerce.dto.request.OrderCreateRequest;
 import com.dogukan.ecommerce.dto.request.OrderItemRequest;
 import com.dogukan.ecommerce.dto.response.OrderResponse;
@@ -18,6 +19,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 
 import java.math.BigDecimal;
 import java.util.Collections;
@@ -47,6 +49,9 @@ class OrderServiceImplTest {
 
     @Mock
     private OrderMapper orderMapper;
+
+    @Mock
+    private ApplicationEventPublisher eventPublisher;
 
     @Test
     void when_createOrder_success_then_returnOrderResponse() {
@@ -83,6 +88,7 @@ class OrderServiceImplTest {
                 order.getOrderStatus() == OrderStatus.PENDING &&
                         order.getTotalAmount().compareTo(BigDecimal.valueOf(200)) == 0
         ));
+        verify(eventPublisher,times(1)).publishEvent(any(OrderCompletedEvent.class));
     }
 
     @Test

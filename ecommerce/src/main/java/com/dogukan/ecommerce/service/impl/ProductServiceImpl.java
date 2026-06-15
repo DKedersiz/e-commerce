@@ -46,6 +46,7 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     @Transactional(readOnly = true)
+    @Cacheable(value = "products_cache")
     public ProductResponse getProductById(Long id) {
         // TODO: Redis - Önce cache'e bakılacak (@Cacheable).
         return productRepository.findById(id)

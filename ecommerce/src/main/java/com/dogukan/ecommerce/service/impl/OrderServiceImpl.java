@@ -1,5 +1,6 @@
 package com.dogukan.ecommerce.service.impl;
 
+import com.dogukan.ecommerce.dto.event.OrderCompletedEvent;
 import com.dogukan.ecommerce.dto.request.OrderCreateRequest;
 import com.dogukan.ecommerce.dto.request.OrderItemRequest;
 import com.dogukan.ecommerce.dto.response.OrderResponse;
@@ -17,6 +18,7 @@ import com.dogukan.ecommerce.service.ProductService;
 import com.dogukan.ecommerce.util.enums.OrderStatus;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -32,6 +34,7 @@ public class OrderServiceImpl implements OrderService {
     private final UserRepository userRepository;
     private final OrderMapper orderMapper;
     private final ProductService productService;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Override
     @Transactional
@@ -88,6 +91,13 @@ public class OrderServiceImpl implements OrderService {
         Order savedOrder = orderRepository.save(order);
         log.info("Sipariş oluşturuldu. OrderId: {}, User: {}, Tutar: {}",
                 savedOrder.getId(), userEmail, savedOrder.getTotalAmount());
+
+        OrderCompletedEvent orderCompletedEvent = new OrderCompletedEvent(
+                savedOrder.getId(),
+                userEmail,
+                savedOrder.getTotalAmount()
+        );
+        eventPublisher.publishEvent(orderCompletedEvent);
 
         return orderMapper.toResponse(savedOrder);
     }

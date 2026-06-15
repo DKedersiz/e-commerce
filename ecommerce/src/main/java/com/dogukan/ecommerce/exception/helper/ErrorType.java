@@ -15,7 +15,8 @@ public enum ErrorType {
     EMPTY_CART(6,"Sepet boş olamaz.",HttpStatus.BAD_REQUEST),
     INVALID_ORDER_ITEMS(7,"Invalid order items.",HttpStatus.BAD_REQUEST),
     INVALID_STATUS_TRANSITION(8,"Invalid status transition.",HttpStatus.BAD_REQUEST),
-    ORDER_NOT_FOUND(9,"Sipariş bulunamadı.",HttpStatus.NOT_FOUND);
+    ORDER_NOT_FOUND(9,"Sipariş bulunamadı.",HttpStatus.NOT_FOUND),
+    EMAIL_SENDING_FAILED(10,"E-posta gönderilirken hata oluştu.",HttpStatus.INTERNAL_SERVER_ERROR);
 
 
     private final int code;
