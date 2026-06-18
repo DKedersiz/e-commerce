@@ -4,5 +4,6 @@ import com.dogukan.ecommerce.dto.request.OrderCreateRequest;
 import com.dogukan.ecommerce.dto.response.OrderResponse;
 
 public interface OrderService {
-    public OrderResponse createOrder(OrderCreateRequest request, String userEmail);
+    OrderResponse createOrder(OrderCreateRequest request, String userEmail);
+    void cancelExpiredOrders();
 }

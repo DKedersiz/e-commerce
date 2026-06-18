@@ -122,4 +122,10 @@ public class ProductServiceImpl implements ProductService {
 
         product.setStock(product.getStock() + quantity);
     }
+
+    @Override
+    @Transactional
+    public void restoreStockBulk(Map<Long, Integer> productQuantities) {
+         productQuantities.forEach(productRepository::restoreStockBulk);
+    }
 }

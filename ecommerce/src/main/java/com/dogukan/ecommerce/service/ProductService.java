@@ -20,4 +20,6 @@ public interface ProductService {
     Map<Long, Product> decreaseStocksAndGet(Map<Long, Integer> productQuantities);
 
     void increaseStock(Long productId, Integer quantity);
+
+    void restoreStockBulk(Map<Long, Integer> productQuantities);
 }

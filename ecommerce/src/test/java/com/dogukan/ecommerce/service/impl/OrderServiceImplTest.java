@@ -1,9 +1,10 @@
 package com.dogukan.ecommerce.service.impl;
 
-import com.dogukan.ecommerce.dto.event.OrderCompletedEvent;
 import com.dogukan.ecommerce.dto.request.OrderCreateRequest;
 import com.dogukan.ecommerce.dto.request.OrderItemRequest;
 import com.dogukan.ecommerce.dto.response.OrderResponse;
+import com.dogukan.ecommerce.entity.Order;
+import com.dogukan.ecommerce.entity.OrderItem;
 import com.dogukan.ecommerce.entity.Product;
 import com.dogukan.ecommerce.entity.User;
 import com.dogukan.ecommerce.exception.BusinessException;
@@ -19,13 +20,10 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.context.ApplicationEventPublisher;
 
 import java.math.BigDecimal;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.time.LocalDateTime;
+import java.util.*;
 
 import static org.instancio.Select.field;
 import static org.junit.jupiter.api.Assertions.*;
@@ -49,9 +47,6 @@ class OrderServiceImplTest {
 
     @Mock
     private OrderMapper orderMapper;
-
-    @Mock
-    private ApplicationEventPublisher eventPublisher;
 
     @Test
     void when_createOrder_success_then_returnOrderResponse() {
@@ -88,7 +83,6 @@ class OrderServiceImplTest {
                 order.getOrderStatus() == OrderStatus.PENDING &&
                         order.getTotalAmount().compareTo(BigDecimal.valueOf(200)) == 0
         ));
-        verify(eventPublisher,times(1)).publishEvent(any(OrderCompletedEvent.class));
     }
 
     @Test
@@ -202,5 +196,94 @@ class OrderServiceImplTest {
         verify(orderRepository).save(argThat(order ->
                 order.getTotalAmount().compareTo(BigDecimal.valueOf(250)) == 0
         ));
+    }
+
+    @Test
+    void when_cancelExpiredOrders_noExpiredOrders_then_doNothing() {
+        when(orderRepository.findAllByOrderStatusAndCreatedAtBefore(
+                eq(OrderStatus.PENDING),
+                any(LocalDateTime.class))).thenReturn(Collections.emptyList());
+
+        orderService.cancelExpiredOrders();
+
+        verify(orderRepository, never()).save(any());
+        verify(productService, never()).restoreStockBulk(any());
+    }
+
+    @Test
+    void when_cancelExpiredOrders_hasExpiredOrders_then_cancelAndRestoreStocks() {
+        Product product = Instancio.of(Product.class)
+                .set(field(Product::getId),1L)
+                .create();
+
+        OrderItem orderItem = Instancio.of(OrderItem.class)
+                .set(field(OrderItem::getProduct),product)
+                .set(field(OrderItem::getQuantity),3)
+                .create();
+
+        Order expiredOrder = Instancio.of(Order.class)
+                .set(field(Order::getOrderStatus),OrderStatus.PENDING)
+                .set(field(Order::getItems),List.of(orderItem))
+                .create();
+
+        when(orderRepository.findAllByOrderStatusAndCreatedAtBefore(
+                eq(OrderStatus.PENDING),
+                any(LocalDateTime.class)
+        )).thenReturn(List.of(expiredOrder));
+
+        when(orderRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        orderService.cancelExpiredOrders();
+
+        assertEquals(OrderStatus.FAILED, expiredOrder.getOrderStatus());
+
+        verify(orderRepository,times(1)).save(any(Order.class));
+
+        verify(productService).restoreStockBulk(argThat(map ->
+                map.containsKey(1L) && map.get(1L).equals(3)));
+    }
+
+    @Test
+    void when_cancelExpiredOrders_sameProductInMultipleOrders_then_quantitiesMerged() {
+        Product product = Instancio.of(Product.class)
+                .set(field(Product::getId),1L)
+                .create();
+
+        OrderItem orderItem = Instancio.of(OrderItem.class)
+                .set(field(OrderItem::getProduct),product)
+                .set(field(OrderItem::getQuantity),3)
+                .create();
+
+        OrderItem orderItem2 = Instancio.of(OrderItem.class)
+                .set(field(OrderItem::getProduct),product)
+                .set(field(OrderItem::getQuantity),4)
+                .create();
+
+        Order expiredOrder = Instancio.of(Order.class)
+                .set(field(Order::getOrderStatus),OrderStatus.PENDING)
+                .set(field(Order::getItems),new ArrayList<>(List.of(orderItem)))
+                .create();
+
+        Order expiredOrder2 = Instancio.of(Order.class)
+                .set(field(Order::getOrderStatus),OrderStatus.PENDING)
+                .set(field(Order::getItems),new ArrayList<>(List.of(orderItem2)))
+                .create();
+
+        when(orderRepository.findAllByOrderStatusAndCreatedAtBefore(
+                eq(OrderStatus.PENDING),
+                any(LocalDateTime.class)
+        )).thenReturn(List.of(expiredOrder, expiredOrder2));
+
+        when(orderRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        orderService.cancelExpiredOrders();
+
+        assertEquals(OrderStatus.FAILED, expiredOrder.getOrderStatus());
+        assertEquals(OrderStatus.FAILED, expiredOrder2.getOrderStatus());
+
+        verify(orderRepository, times(2)).save(any());
+
+        verify(productService).restoreStockBulk(argThat(map ->
+                map.containsKey(1L) && map.get(1L).equals(7)));
     }
 }

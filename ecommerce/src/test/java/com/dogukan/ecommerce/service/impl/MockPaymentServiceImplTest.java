@@ -11,6 +11,7 @@ import com.dogukan.ecommerce.exception.helper.ErrorType;
 import com.dogukan.ecommerce.repository.OrderRepository;
 import com.dogukan.ecommerce.repository.PaymentRepository;
 import com.dogukan.ecommerce.service.ProductService;
+import com.dogukan.ecommerce.dto.event.OrderCompletedEvent;
 import com.dogukan.ecommerce.util.enums.OrderStatus;
 import com.dogukan.ecommerce.util.enums.PaymentStatus;
 import org.instancio.Instancio;
@@ -20,6 +21,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -46,6 +48,9 @@ class MockPaymentServiceImplTest {
 
     @Mock
     private ProductService productService;
+
+    @Mock
+    private ApplicationEventPublisher eventPublisher;
 
     @Test
     void when_payOrder_success_then_orderCompleted() {
@@ -75,6 +80,7 @@ class MockPaymentServiceImplTest {
         verify(paymentRepository).save(argThat(payment ->
                 payment.getStatus() == PaymentStatus.SUCCESS
         ));
+        verify(eventPublisher, times(1)).publishEvent(any(OrderCompletedEvent.class));
     }
 
     @Test
@@ -110,7 +116,9 @@ class MockPaymentServiceImplTest {
 
         assertEquals(PaymentStatus.FAILED.name(), response.getStatus());
         assertEquals(OrderStatus.FAILED, order.getOrderStatus());
-        verify(productService).increaseStock(product.getId(), orderItem.getQuantity());
+        verify(productService).restoreStockBulk(argThat(map ->
+                map.containsKey(product.getId()) && map.get(product.getId()).equals(orderItem.getQuantity())
+        ));
         verify(paymentRepository).save(argThat(payment ->
                 payment.getStatus() == PaymentStatus.FAILED &&
                         payment.getFailureReason().equals("Insufficent funds (MOCK)")
@@ -126,6 +134,6 @@ class MockPaymentServiceImplTest {
 
         assertEquals(ErrorType.ORDER_NOT_FOUND, ex.getErrorType());
         verify(paymentRepository, never()).save(any());
-        verify(productService, never()).increaseStock(any(), any());
+        verify(productService, never()).restoreStockBulk(anyMap());
     }
 }

@@ -12,13 +12,18 @@ import com.dogukan.ecommerce.repository.OrderRepository;
 import com.dogukan.ecommerce.repository.PaymentRepository;
 import com.dogukan.ecommerce.service.MockPaymentService;
 import com.dogukan.ecommerce.service.ProductService;
+import com.dogukan.ecommerce.dto.event.OrderCompletedEvent;
 import com.dogukan.ecommerce.util.enums.OrderStatus;
 import com.dogukan.ecommerce.util.enums.PaymentStatus;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -27,6 +32,7 @@ public class MockPaymentServiceImpl implements MockPaymentService {
     private final OrderRepository orderRepository;
     private final PaymentRepository paymentRepository;
     private final ProductService productService;
+    private final ApplicationEventPublisher eventPublisher;
 
 
     @Override
@@ -49,6 +55,7 @@ public class MockPaymentServiceImpl implements MockPaymentService {
     }
 
     @Override
+    @Transactional
     public PaymentResponse payOrder(Long orderId, PaymentRequest request) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new BusinessException(ErrorType.ORDER_NOT_FOUND));
@@ -75,6 +82,13 @@ public class MockPaymentServiceImpl implements MockPaymentService {
         order.transitionTo(OrderStatus.COMPLETED);
         payment.setStatus(PaymentStatus.SUCCESS);
         log.info("Sipariş #{} başarıyla tamamlandı.",order.getId());
+
+        OrderCompletedEvent orderCompletedEvent = new OrderCompletedEvent(
+                order.getId(),
+                order.getUser().getEmail(),
+                order.getTotalAmount()
+        );
+        eventPublisher.publishEvent(orderCompletedEvent);
     }
 
     private void handleFailure(Order order, Payment payment, String failureReason) {
@@ -83,8 +97,12 @@ public class MockPaymentServiceImpl implements MockPaymentService {
         payment.setFailureReason(failureReason);
 
         log.warn("Sipariş #{} ödemesi başarısız! Stoklar geri yükleniyor...", order.getId());
-        for (OrderItem item : order.getItems()) {
-            productService.increaseStock(item.getProduct().getId(), item.getQuantity());
-        }
+
+        Map<Long,Integer> productQuantitiesToRestore = order.getItems().stream()
+                .collect(Collectors.toMap(orderItem -> orderItem.getProduct().getId(),
+                        OrderItem::getQuantity,
+                        Integer::sum));
+
+        productService.restoreStockBulk(productQuantitiesToRestore);
     }
 }
