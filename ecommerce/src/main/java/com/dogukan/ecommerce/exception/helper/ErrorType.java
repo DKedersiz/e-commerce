@@ -16,7 +16,8 @@ public enum ErrorType {
     INVALID_ORDER_ITEMS(7,"Invalid order items.",HttpStatus.BAD_REQUEST),
     INVALID_STATUS_TRANSITION(8,"Invalid status transition.",HttpStatus.BAD_REQUEST),
     ORDER_NOT_FOUND(9,"Sipariş bulunamadı.",HttpStatus.NOT_FOUND),
-    EMAIL_SENDING_FAILED(10,"E-posta gönderilirken hata oluştu.",HttpStatus.INTERNAL_SERVER_ERROR);
+    EMAIL_SENDING_FAILED(10,"E-posta gönderilirken hata oluştu.",HttpStatus.INTERNAL_SERVER_ERROR),
+    FORBIDDEN_USER_ACT(11, "Yasaklı kullanıcı hareketi.",HttpStatus.BAD_REQUEST);
 
 
     private final int code;

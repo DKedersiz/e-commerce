@@ -7,6 +7,8 @@ import com.dogukan.ecommerce.entity.OrderItem;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
+import java.util.List;
+
 @Mapper(componentModel = "spring")
 public interface OrderMapper {
 
@@ -15,4 +17,6 @@ public interface OrderMapper {
     @Mapping(source = "product.id", target = "productId")
     @Mapping(source = "product.name", target = "productName")
     OrderItemResponse toItemResponse(OrderItem orderItem);
+
+    List<OrderResponse> toResponseList(List<Order> orders);
 }

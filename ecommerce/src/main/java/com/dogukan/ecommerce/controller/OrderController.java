@@ -7,10 +7,9 @@ import com.dogukan.ecommerce.dto.response.PaymentResponse;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RequestMapping("/api/v1/orders")
 public interface OrderController {
@@ -20,4 +19,11 @@ public interface OrderController {
 
     @PostMapping("/create")
     ResponseEntity<OrderResponse> createOrder(@RequestBody OrderCreateRequest request, @AuthenticationPrincipal UserDetails userDetails);
+
+    @GetMapping("/getOrders")
+    ResponseEntity<List<OrderResponse>> getMyOrders(@AuthenticationPrincipal UserDetails userDetails);
+
+    @GetMapping("/{id}")
+    ResponseEntity<OrderResponse> getOrderById(@PathVariable Long id, @AuthenticationPrincipal UserDetails userDetails);
+
 }

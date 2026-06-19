@@ -12,6 +12,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
+
 @RestController
 @RequiredArgsConstructor
 public class OrderControllerImpl implements OrderController {
@@ -27,5 +29,15 @@ public class OrderControllerImpl implements OrderController {
     @Override
     public ResponseEntity<OrderResponse> createOrder(OrderCreateRequest request, UserDetails userDetails) {
         return ResponseEntity.ok(orderService.createOrder(request,userDetails.getUsername()));
+    }
+
+    @Override
+    public ResponseEntity<List<OrderResponse>> getMyOrders(UserDetails userDetails) {
+        return ResponseEntity.ok(orderService.getOrdersByUserEmail(userDetails.getUsername()));
+    }
+
+    @Override
+    public ResponseEntity<OrderResponse> getOrderById(Long id, UserDetails userDetails) {
+        return ResponseEntity.ok(orderService.getOrderById(id,userDetails.getUsername()));
     }
 }

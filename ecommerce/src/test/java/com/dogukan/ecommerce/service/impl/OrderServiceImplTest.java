@@ -286,4 +286,110 @@ class OrderServiceImplTest {
         verify(productService).restoreStockBulk(argThat(map ->
                 map.containsKey(1L) && map.get(1L).equals(7)));
     }
+
+    @Test
+    void when_getOrdersByUserEmail_userNotFound_then_throwException() {
+        String userEmail = "test@test.test";
+
+        when(userRepository.findByEmail(userEmail)).thenReturn(Optional.empty());
+
+        assertThrows(BusinessException.class, () -> orderService.getOrdersByUserEmail(userEmail));
+
+        verify(orderRepository, never()).findById(any());
+        verify(orderMapper, never()).toResponseList(anyList());
+    }
+
+    @Test
+    void when_getOrdersByUserEmail_success_returnsOrderList() {
+        String userEmail = "test@test.test";
+
+        User user = Instancio.of(User.class)
+                        .set(field(User::getEmail),userEmail)
+                                .create();
+
+        List<Order> orderList = Instancio.ofList(Order.class)
+                        .create();
+
+
+        when(userRepository.findByEmail(userEmail)).thenReturn(Optional.ofNullable(user));
+        when(orderRepository.findByUserId(user.getId())).thenReturn(orderList);
+
+        List<OrderResponse> result = orderService.getOrdersByUserEmail(userEmail);
+
+        verify(userRepository, times(1)).findByEmail(userEmail);
+        verify(orderRepository, times(1)).findByUserId(user.getId());
+        verify(orderMapper, times(1)).toResponseList(orderList);
+        assertEquals(result,orderMapper.toResponseList(orderList));
+    }
+
+    @Test
+    void when_getOrdersByUserEmail_noOrders_returnEmptyList() {
+        String userEmail = "test@test.com";
+
+        User user = Instancio.of(User.class)
+                .set(field(User::getEmail),userEmail)
+                .create();
+
+        when(userRepository.findByEmail(userEmail)).thenReturn(Optional.ofNullable(user));
+        when(orderRepository.findByUserId(user.getId())).thenReturn(Collections.emptyList());
+
+        List<OrderResponse> result = orderService.getOrdersByUserEmail(userEmail);
+
+        verify(userRepository, times(1)).findByEmail(userEmail);
+        verify(orderRepository, times(1)).findByUserId(user.getId());
+        assertEquals(Collections.emptyList(), orderRepository.findByUserId(user.getId()));
+        assertEquals(result,Collections.emptyList());
+
+    }
+
+    @Test
+    void when_getOrderById_orderNotFound_then_throwException() {
+        Long orderId = 1L;
+        String userEmail = "test@test.com";
+
+        assertThrows(BusinessException.class, () -> orderService.getOrderById(orderId,userEmail));
+
+        verify(orderMapper, never()).toResponseList(anyList());
+    }
+
+    @Test
+    void when_getOrderById_forbiddenUser_then_throwException() {
+        Long orderId = 1L;
+        String requestingUserEmail = "test@test.com";
+
+        User owner = Instancio.of(User.class)
+                .set(field(User::getEmail), "owner@test.com")
+                .create();
+
+        Order order = Instancio.of(Order.class)
+                .set(field(Order::getUser), owner)
+                .create();
+        when(orderRepository.findById(orderId)).thenReturn(Optional.of(order));
+
+        BusinessException ex = assertThrows(BusinessException.class,
+                () -> orderService.getOrderById(orderId, requestingUserEmail));
+        assertEquals(ErrorType.FORBIDDEN_USER_ACT, ex.getErrorType());
+
+        verify(orderMapper, never()).toResponse(any());
+    }
+
+    @Test
+    void when_getOrderById_success_returnOrder() {
+        Long orderId = 1L;
+
+        User owner = Instancio.of(User.class)
+                .set(field(User::getEmail), "owner@test.com")
+                .create();
+
+        Order order = Instancio.of(Order.class)
+                .set(field(Order::getUser), owner)
+                .create();
+
+        when(orderRepository.findById(orderId)).thenReturn(Optional.of(order));
+
+        orderService.getOrderById(orderId, owner.getEmail());
+
+        verify(orderRepository, times(1)).findById(orderId);
+        verify(orderMapper, times(1)).toResponse(order);
+    }
 }

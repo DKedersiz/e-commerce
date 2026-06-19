@@ -122,4 +122,26 @@ public class OrderServiceImpl implements OrderService {
             log.info("Toplam {} ürün için stok iadesi yapıldı.", productQuantitiesToRestore.size());
         }
     }
+
+    @Override
+    public List<OrderResponse> getOrdersByUserEmail(String userEmail) {
+        User user = userRepository.findByEmail(userEmail)
+                .orElseThrow(() -> new BusinessException(ErrorType.USER_NOT_FOUND));
+
+        List<Order> orders = orderRepository.findByUserId(user.getId());
+
+        return orderMapper.toResponseList(orders);
+    }
+
+    @Override
+    public OrderResponse getOrderById(Long orderId, String userEmail) {
+        Order orderById = orderRepository.findById(orderId)
+                .orElseThrow(() -> new BusinessException(ErrorType.ORDER_NOT_FOUND));
+
+        if(!orderById.getUser().getEmail().equals(userEmail)) {
+            throw new BusinessException(ErrorType.FORBIDDEN_USER_ACT);
+        }
+
+        return orderMapper.toResponse(orderById);
+    }
 }
