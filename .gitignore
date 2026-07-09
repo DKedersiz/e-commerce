@@ -1,0 +1,21 @@
+# IDEs and editors
+.idea/
+.vscode/
+*.iml
+*.ipr
+*.iws
+
+# System Files
+.DS_Store
+Thumbs.db
+
+# Build outputs
+**/target/
+**/.next/
+**/node_modules/
+**/dist/
+**/build/
+
+# Local Environment Variables
+.env
+.env.local

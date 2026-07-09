@@ -11,6 +11,11 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   redis:
     image: redis:latest
@@ -18,6 +23,11 @@ services:
     ports:
       - "6379:6379"
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   zookeeper:
     image: confluentinc/cp-zookeeper:7.5.0
@@ -45,6 +55,11 @@ services:
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "kafka-broker-api-versions --bootstrap-server localhost:9092 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   mailhog:
     image: mailhog/mailhog:latest
@@ -64,6 +79,49 @@ services:
       KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:29092
     depends_on:
       - kafka
+    restart: unless-stopped
+
+  backend-api:
+    build:
+      context: ./ecommerce-backend
+      dockerfile: Dockerfile
+    container_name: ecommerce-backend
+    ports:
+      - "8080:8080"
+    environment:
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_NAME=postgres
+      - DB_USERNAME=postgres
+      - DB_PASSWORD=1
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:29092
+      - MAIL_HOST=mailhog
+      - MAIL_PORT=1025
+      - STRIPE_API_KEY=${STRIPE_API_KEY}
+      - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET}
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    restart: unless-stopped
+
+  frontend-app:
+    build:
+      context: ./ecommerce-frontend
+      dockerfile: Dockerfile
+    container_name: ecommerce-frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:8080/api/v1
+    depends_on:
+      - backend-api
     restart: unless-stopped
 
 volumes:

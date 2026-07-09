@@ -1,0 +1,76 @@
+spring:
+  application:
+    name: ecommerce
+
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:postgres}
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:1}
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        default_schema: ecommerce
+        hbm2ddl:
+          create_namespaces: true
+
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+
+  security:
+    jwt:
+      secret-key: KmOh41wlv912wgrGcwk6o4zsDm6lAD6VqBtBlcDvYE5
+      expiration: 900000
+      refresh-token:
+        expiration: 604800000
+
+  springdoc:
+    api-docs:
+      path: /v3/api-docs
+      enabled: ${SWAGGER_ENABLED:true}
+    swagger-ui:
+      path: /swagger-ui.html
+      disable-swagger-default-url: true
+      enabled: ${SWAGGER_ENABLED:true}
+
+  mail:
+    host: ${MAIL_HOST:localhost}
+    port: ${MAIL_PORT:1025}
+    properties:
+      mail:
+        smtp:
+          auth: false
+          starttls:
+            enable: false
+
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+    consumer:
+      group-id: ecommerce-group
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: "*"
+
+  gemini:
+    api:
+      key: ${GEMINI_API_KEY:}
+      url: "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent"
+
+  stripe:
+    api:
+      key: ${STRIPE_API_KEY:}
+
+    webhook:
+      secret: ${STRIPE_WEBHOOK_SECRET:}
+      success-url: "http://localhost:3000/payment/success?session_id={CHECKOUT_SESSION_ID}"
+      cancel-url: "http://localhost:3000/payment/failure"
